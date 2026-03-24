@@ -16,7 +16,7 @@ const execFile = promisify(execFileCallback);
 const OPENAI_API_URL = "https://api.openai.com/v1/audio/speech";
 const DEFAULT_OPENAI_MODEL = "gpt-4o-mini-tts";
 const DEFAULT_OPENAI_TTS_TIMEOUT_MS = 30_000;
-export const DEFAULT_TTS_INSTRUCTIONS = "Read this article aloud like a warm, conversational human podcast host, in a natural, engaging style, with steady pace, with brief pauses at headings and sentence boundaries, with subtle emphasis on key ideas.";
+export const DEFAULT_TTS_INSTRUCTIONS = "Read this article aloud like a warm, conversational human podcast host, in a natural, engaging style, with steady pace, with brief pauses at headings and sentence boundaries, with subtle emphasis on key ideas, that helps the listener track complex ideas.";
 const FLITE_VOICE_BY_APP_VOICE: Record<string, string> = {
   alloy: "slt",
   ash: "kal",
