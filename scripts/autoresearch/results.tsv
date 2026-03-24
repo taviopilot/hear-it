@@ -53,3 +53,6 @@ experiment_id	timestamp	judge_mode	composite_score	prompt_hash	technical_score	n
 1774390543835	2026-03-24T22:15:43.835Z	heuristic-runner	6.7083	9c70399e4ee0	6.7625	6.7125	6.6500	Read this article aloud like a warm, conversational human podcast host, with steady pace, with c
 1774390544300	2026-03-24T22:15:44.300Z	heuristic-runner	6.7083	a1c571869a0c	6.7625	6.7125	6.6500	Read this article aloud like a warm, conversational human podcast host, with steady pace, with c
 1774390544766	2026-03-24T22:15:44.766Z	heuristic-runner	7.9208	f3a86b647778	7.9000	7.9625	7.9000	Read this article aloud like a warm, conversational human podcast host, with steady pace, with b
+1774390545241	2026-03-24T22:15:45.241Z	heuristic-runner	7.9208	6579416a07b8	7.9000	7.9625	7.9000	Read this article aloud like a warm, conversational human podcast host, with steady pace, with b
+1774390545708	2026-03-24T22:15:45.708Z	heuristic-runner	7.9208	ea22f1ebe486	7.9000	7.9625	7.9000	Read this article aloud like a warm, conversational human podcast host, with steady pace, with b
+1774390546170	2026-03-24T22:15:46.170Z	heuristic-runner	8.1083	2c9425233caf	8.1625	8.1125	8.0500	Read this article aloud like a warm, conversational human podcast host, with steady pace, with b
