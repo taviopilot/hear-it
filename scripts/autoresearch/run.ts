@@ -14,18 +14,24 @@ const LEAD_PHRASE = "Read this article aloud like a warm, conversational human p
 const MODIFIER_PHRASES = [
   "in a natural, engaging style",
   "that is clear and easy to follow",
+  "with clear delivery for technical ideas",
+  "with warm podcast-level polish for the listener",
 ];
 const PACING_PHRASES = [
   "with steady pace",
   "with brief pauses at headings and sentence boundaries",
   "with clean pacing for news and analysis",
+  "with clean sentence boundaries",
+  "with short pauses at section transitions",
 ];
 const EMPHASIS_PHRASES = [
   "with subtle emphasis on key ideas",
   "that helps the listener track complex ideas",
   "with clarity for technical and news writing",
+  "with natural emphasis on the most important ideas",
+  "with engaging but measured delivery",
 ];
-const CONNECTORS = ["", "while staying concise", "without sounding stiff"];
+const CONNECTORS = ["", "while staying concise", "without sounding stiff", "without overdoing the performance"];
 
 type CandidateScore = {
   candidate: string;
@@ -171,9 +177,9 @@ function buildCandidate(modifiers: string[], pacing: string[], emphasis: string[
 function buildCandidates(current: string): string[] {
   const candidates: string[] = [current];
 
-  for (const modifiers of choose(MODIFIER_PHRASES, 0, MODIFIER_PHRASES.length)) {
-    for (const pacing of choose(PACING_PHRASES, 1, 2)) {
-      for (const emphasis of choose(EMPHASIS_PHRASES, 1, 2)) {
+  for (const modifiers of choose(MODIFIER_PHRASES, 0, 3)) {
+    for (const pacing of choose(PACING_PHRASES, 1, 3)) {
+      for (const emphasis of choose(EMPHASIS_PHRASES, 1, 3)) {
         for (const connector of CONNECTORS) {
           candidates.push(buildCandidate(modifiers, pacing, emphasis, connector));
         }
