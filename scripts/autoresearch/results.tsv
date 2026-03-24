@@ -4,3 +4,52 @@ experiment_id	timestamp	judge_mode	composite_score	prompt_hash	technical_score	n
 1774385557838	2026-03-24T20:52:37.838Z	heuristic-local	7.7333	c55ce3e108af	7.7875	7.7375	7.6750	Read this article aloud like a sharp, warm podcast narrator: conversational, steady, and easy to
 1774385558245	2026-03-24T20:52:38.245Z	heuristic-local	6.7542	b03f300ab566	6.7125	6.8375	6.7125	Narrate this article with a steady, conversational newsroom style: clear sentence boundaries, sh
 1774385558655	2026-03-24T20:52:38.655Z	heuristic-local	6.1500	78cf7e5d36ff	6.1500	6.1500	6.1500	Read this article like a thoughtful audiobook essayist: warm, natural, and unhurried, with crisp
+1774390422293	2026-03-24T22:13:42.293Z	heuristic-local	7.7333	c55ce3e108af	7.7875	7.7375	7.6750	Read this article aloud like a sharp, warm podcast narrator: conversational, steady, and easy to
+1774390424750	2026-03-24T22:13:44.750Z	heuristic-sweep	6.1542	12ac1e48f393	6.1125	6.2375	6.1125	Read this article aloud in a natural, engaging tone with clear pacing and clean sentence boundar
+1774390425211	2026-03-24T22:13:45.211Z	heuristic-sweep	6.7042	be73ad45848f	6.7375	6.7500	6.6250	Read this article aloud like a calm podcast host: natural, warm, and easy to follow, with steady
+1774390425675	2026-03-24T22:13:45.675Z	heuristic-sweep	7.7333	c55ce3e108af	7.7875	7.7375	7.6750	Read this article aloud like a sharp, warm podcast narrator: conversational, steady, and easy to
+1774390426134	2026-03-24T22:13:46.134Z	heuristic-sweep	6.7542	b03f300ab566	6.7125	6.8375	6.7125	Narrate this article with a steady, conversational newsroom style: clear sentence boundaries, sh
+1774390426601	2026-03-24T22:13:46.601Z	heuristic-sweep	6.1500	78cf7e5d36ff	6.1500	6.1500	6.1500	Read this article like a thoughtful audiobook essayist: warm, natural, and unhurried, with crisp
+1774390427065	2026-03-24T22:13:47.065Z	heuristic-sweep	8.6042	85096cd37a9d	8.6375	8.6500	8.5250	Read this article aloud like a warm, conversational human podcast host, in a natural, engaging s
+1774390429714	2026-03-24T22:13:49.714Z	heuristic-baseline	7.7333	c55ce3e108af	7.7875	7.7375	7.6750	Read this article aloud like a sharp, warm podcast narrator: conversational, steady, and easy to
+1774390430189	2026-03-24T22:13:50.189Z	heuristic-runner	7.7333	c55ce3e108af	7.7875	7.7375	7.6750	Read this article aloud like a sharp, warm podcast narrator: conversational, steady, and easy to
+1774390430656	2026-03-24T22:13:50.656Z	heuristic-runner	6.9708	e08935717659	6.9500	7.0125	6.9500	Read this article aloud, like a warm, conversational human podcast host, with steady pace, with 
+1774390431120	2026-03-24T22:13:51.120Z	heuristic-runner	6.9708	f3ae0a710d68	6.9500	7.0125	6.9500	Read this article aloud, like a warm, conversational human podcast host, with steady pace, with 
+1774390431583	2026-03-24T22:13:51.583Z	heuristic-runner	6.9708	d09432b20b00	6.9500	7.0125	6.9500	Read this article aloud, like a warm, conversational human podcast host, with steady pace, with 
+1774390432041	2026-03-24T22:13:52.041Z	heuristic-runner	6.7083	dc51eab5bdc0	6.7625	6.7125	6.6500	Read this article aloud, like a warm, conversational human podcast host, with steady pace, that 
+1774390432507	2026-03-24T22:13:52.507Z	heuristic-runner	6.7083	197e9b66ad9e	6.7625	6.7125	6.6500	Read this article aloud, like a warm, conversational human podcast host, with steady pace, that 
+1774390432975	2026-03-24T22:13:52.975Z	heuristic-runner	6.7083	768931243543	6.7625	6.7125	6.6500	Read this article aloud, like a warm, conversational human podcast host, with steady pace, that 
+1774390433440	2026-03-24T22:13:53.440Z	heuristic-runner	6.7083	07e34061046b	6.7625	6.7125	6.6500	Read this article aloud, like a warm, conversational human podcast host, with steady pace, with 
+1774390433908	2026-03-24T22:13:53.908Z	heuristic-runner	6.7083	43a82250a34d	6.7625	6.7125	6.6500	Read this article aloud, like a warm, conversational human podcast host, with steady pace, with 
+1774390434376	2026-03-24T22:13:54.376Z	heuristic-runner	6.7083	2b2b4f08bff1	6.7625	6.7125	6.6500	Read this article aloud, like a warm, conversational human podcast host, with steady pace, with 
+1774390434842	2026-03-24T22:13:54.842Z	heuristic-runner	7.5750	c28cc7bc0d9d	7.5750	7.5750	7.5750	Read this article aloud, like a warm, conversational human podcast host, with brief pauses at he
+1774390435310	2026-03-24T22:13:55.310Z	heuristic-runner	7.5750	58f2b85c36f8	7.5750	7.5750	7.5750	Read this article aloud, like a warm, conversational human podcast host, with brief pauses at he
+1774390435775	2026-03-24T22:13:55.775Z	heuristic-runner	7.5750	7dd41f680282	7.5750	7.5750	7.5750	Read this article aloud, like a warm, conversational human podcast host, with brief pauses at he
+1774390436247	2026-03-24T22:13:56.247Z	heuristic-runner	7.3125	186007b4ad51	7.3875	7.2750	7.2750	Read this article aloud, like a warm, conversational human podcast host, with brief pauses at he
+1774390436714	2026-03-24T22:13:56.714Z	heuristic-runner	7.3125	859818744ed8	7.3875	7.2750	7.2750	Read this article aloud, like a warm, conversational human podcast host, with brief pauses at he
+1774390437179	2026-03-24T22:13:57.179Z	heuristic-runner	7.3125	63181d6ef7ed	7.3875	7.2750	7.2750	Read this article aloud, like a warm, conversational human podcast host, with brief pauses at he
+1774390437651	2026-03-24T22:13:57.651Z	heuristic-runner	7.3125	1588d304beab	7.3875	7.2750	7.2750	Read this article aloud, like a warm, conversational human podcast host, with brief pauses at he
+1774390438127	2026-03-24T22:13:58.127Z	heuristic-runner	7.3125	d0b1e929a9a9	7.3875	7.2750	7.2750	Read this article aloud, like a warm, conversational human podcast host, with brief pauses at he
+1774390438599	2026-03-24T22:13:58.599Z	heuristic-runner	7.3125	f1e11a9b3845	7.3875	7.2750	7.2750	Read this article aloud, like a warm, conversational human podcast host, with brief pauses at he
+1774390439093	2026-03-24T22:13:59.093Z	heuristic-runner	6.6458	3d3dbc5c1865	6.6250	6.6875	6.6250	Read this article aloud, like a warm, conversational human podcast host, with clean pacing for n
+1774390535433	2026-03-24T22:15:35.433Z	heuristic-baseline	7.7333	c55ce3e108af	7.7875	7.7375	7.6750	Read this article aloud like a sharp, warm podcast narrator: conversational, steady, and easy to
+1774390535904	2026-03-24T22:15:35.904Z	heuristic-runner	7.7333	c55ce3e108af	7.7875	7.7375	7.6750	Read this article aloud like a sharp, warm podcast narrator: conversational, steady, and easy to
+1774390536368	2026-03-24T22:15:36.368Z	heuristic-runner	6.9708	ba9467f2363d	6.9500	7.0125	6.9500	Read this article aloud like a warm, conversational human podcast host, with steady pace, with s
+1774390536832	2026-03-24T22:15:36.832Z	heuristic-runner	6.9708	87fec0571051	6.9500	7.0125	6.9500	Read this article aloud like a warm, conversational human podcast host, with steady pace, with s
+1774390537293	2026-03-24T22:15:37.293Z	heuristic-runner	6.9708	ad822e3464b2	6.9500	7.0125	6.9500	Read this article aloud like a warm, conversational human podcast host, with steady pace, with s
+1774390537758	2026-03-24T22:15:37.758Z	heuristic-runner	7.1583	735f93a5b399	7.2125	7.1625	7.1000	Read this article aloud like a warm, conversational human podcast host, with steady pace, with s
+1774390538218	2026-03-24T22:15:38.218Z	heuristic-runner	7.1583	e7e934cfdc24	7.2125	7.1625	7.1000	Read this article aloud like a warm, conversational human podcast host, with steady pace, with s
+1774390538684	2026-03-24T22:15:38.684Z	heuristic-runner	7.1583	d2175f49e96f	7.2125	7.1625	7.1000	Read this article aloud like a warm, conversational human podcast host, with steady pace, with s
+1774390539150	2026-03-24T22:15:39.150Z	heuristic-runner	7.1583	a4c165c13ee9	7.2125	7.1625	7.1000	Read this article aloud like a warm, conversational human podcast host, with steady pace, with s
+1774390539634	2026-03-24T22:15:39.634Z	heuristic-runner	7.1583	6ea50eef036a	7.2125	7.1625	7.1000	Read this article aloud like a warm, conversational human podcast host, with steady pace, with s
+1774390540101	2026-03-24T22:15:40.101Z	heuristic-runner	7.1583	69728f2eb2ab	7.2125	7.1625	7.1000	Read this article aloud like a warm, conversational human podcast host, with steady pace, with s
+1774390540566	2026-03-24T22:15:40.566Z	heuristic-runner	6.7083	df4e3e93a423	6.7625	6.7125	6.6500	Read this article aloud like a warm, conversational human podcast host, with steady pace, that h
+1774390541030	2026-03-24T22:15:41.030Z	heuristic-runner	6.7083	9af979ff5b58	6.7625	6.7125	6.6500	Read this article aloud like a warm, conversational human podcast host, with steady pace, that h
+1774390541498	2026-03-24T22:15:41.498Z	heuristic-runner	6.7083	1d55721ecf25	6.7625	6.7125	6.6500	Read this article aloud like a warm, conversational human podcast host, with steady pace, that h
+1774390541964	2026-03-24T22:15:41.964Z	heuristic-runner	6.8958	aef4677d5c5d	7.0250	6.8625	6.8000	Read this article aloud like a warm, conversational human podcast host, with steady pace, that h
+1774390542430	2026-03-24T22:15:42.430Z	heuristic-runner	6.8958	2d849f5c6d3d	7.0250	6.8625	6.8000	Read this article aloud like a warm, conversational human podcast host, with steady pace, that h
+1774390542901	2026-03-24T22:15:42.901Z	heuristic-runner	6.8958	1a6ed65dc086	7.0250	6.8625	6.8000	Read this article aloud like a warm, conversational human podcast host, with steady pace, that h
+1774390543368	2026-03-24T22:15:43.368Z	heuristic-runner	6.7083	37c4029cfc66	6.7625	6.7125	6.6500	Read this article aloud like a warm, conversational human podcast host, with steady pace, with c
+1774390543835	2026-03-24T22:15:43.835Z	heuristic-runner	6.7083	9c70399e4ee0	6.7625	6.7125	6.6500	Read this article aloud like a warm, conversational human podcast host, with steady pace, with c
+1774390544300	2026-03-24T22:15:44.300Z	heuristic-runner	6.7083	a1c571869a0c	6.7625	6.7125	6.6500	Read this article aloud like a warm, conversational human podcast host, with steady pace, with c
+1774390544766	2026-03-24T22:15:44.766Z	heuristic-runner	7.9208	f3a86b647778	7.9000	7.9625	7.9000	Read this article aloud like a warm, conversational human podcast host, with steady pace, with b
