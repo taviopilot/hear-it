@@ -7,8 +7,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, "../..");
 const TTS_FILE = path.join(REPO_ROOT, "apps/api/src/tts.ts");
-const RESULTS_FILE = path.join(__dirname, "results.tsv");
-const CACHE_FILE = path.join(__dirname, "cache.json");
+const DEFAULT_RESULTS_FILE = path.join(__dirname, "results.tsv");
+const DEFAULT_CACHE_FILE = path.join(__dirname, "cache.json");
+const RESULTS_FILE = process.env.AUTORESEARCH_RESULTS_FILE
+  ? path.resolve(REPO_ROOT, process.env.AUTORESEARCH_RESULTS_FILE)
+  : DEFAULT_RESULTS_FILE;
+const CACHE_FILE = process.env.AUTORESEARCH_CACHE_FILE
+  ? path.resolve(REPO_ROOT, process.env.AUTORESEARCH_CACHE_FILE)
+  : DEFAULT_CACHE_FILE;
 const RESULTS_HEADER = [
   "experiment_id",
   "timestamp",
@@ -39,6 +45,22 @@ const BENCHMARK_SNIPPETS = [
   },
 ] as const;
 
+type HeuristicBreakdown = {
+  naturalness: number;
+  pacing: number;
+  engagement: number;
+  clarity: number;
+};
+
+type CacheRecord = Record<string, { average: number; scores: HeuristicBreakdown }>;
+
+type Evaluation = {
+  snippetId: string;
+  cached: boolean;
+  average: number;
+  scores: HeuristicBreakdown;
+};
+
 function extractCurrentInstructions(): string {
   const source = fs.readFileSync(TTS_FILE, "utf8");
   const match =
@@ -52,14 +74,9 @@ function extractCurrentInstructions(): string {
   return match[1].replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
 }
 
-type HeuristicBreakdown = {
-  naturalness: number;
-  pacing: number;
-  engagement: number;
-  clarity: number;
-};
-
-type CacheRecord = Record<string, { average: number; scores: HeuristicBreakdown }>;
+function getInstructionsUnderTest(): string {
+  return process.env.AUTORESEARCH_INSTRUCTIONS_OVERRIDE?.trim() || extractCurrentInstructions();
+}
 
 function clamp(value: number, min = 1, max = 10): number {
   return Math.max(min, Math.min(max, value));
@@ -103,9 +120,6 @@ function scoreSnippet(instructionsRaw: string, snippetId: string): { average: nu
   if (snippetId === "news") {
     clarity += keywordHits(instructions, ["steady", "clean", "clear"]) * 0.25;
   }
-  if (snippetId === "narrative") {
-    naturalness + keywordHits(instructions, ["warm", "conversational"]) * 0.0;
-  }
 
   const scores: HeuristicBreakdown = {
     naturalness,
@@ -131,18 +145,18 @@ function loadCache(): CacheRecord {
 }
 
 function saveCache(cache: CacheRecord): void {
+  fs.mkdirSync(path.dirname(CACHE_FILE), { recursive: true });
   fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
 }
 
 function ensureResultsHeader(): void {
+  fs.mkdirSync(path.dirname(RESULTS_FILE), { recursive: true });
   if (!fs.existsSync(RESULTS_FILE)) {
     fs.writeFileSync(RESULTS_FILE, RESULTS_HEADER);
   }
 }
 
-async function main(): Promise<void> {
-  const instructions = extractCurrentInstructions();
-  const preview = instructions.slice(0, 96).replace(/\t/g, " ").replace(/\n/g, " ");
+function evaluateInstructions(instructions: string): Evaluation[] {
   const hash = promptHash(instructions);
   const cache = loadCache();
   const evaluations = BENCHMARK_SNIPPETS.map((snippet) => {
@@ -158,6 +172,20 @@ async function main(): Promise<void> {
   });
 
   saveCache(cache);
+  return evaluations;
+}
+
+function emitJson(payload: object): void {
+  if (process.env.AUTORESEARCH_PRINT_JSON === "1") {
+    console.log(JSON.stringify(payload, null, 2));
+  }
+}
+
+async function main(): Promise<void> {
+  const instructions = getInstructionsUnderTest();
+  const preview = instructions.slice(0, 96).replace(/\t/g, " ").replace(/\n/g, " ");
+  const hash = promptHash(instructions);
+  const evaluations = evaluateInstructions(instructions);
 
   console.log("=".repeat(60));
   console.log("Hear It TTS Autoresearch — local heuristic judge");
@@ -180,7 +208,7 @@ async function main(): Promise<void> {
   const row = [
     Date.now().toString(),
     new Date().toISOString(),
-    "heuristic-local",
+    process.env.AUTORESEARCH_JUDGE_MODE ?? "heuristic-local",
     composite.toFixed(4),
     hash,
     evaluations[0]?.average.toFixed(4) ?? "",
@@ -189,6 +217,15 @@ async function main(): Promise<void> {
     preview,
   ].join("\t") + "\n";
   fs.appendFileSync(RESULTS_FILE, row);
+
+  emitJson({
+    composite,
+    promptHash: hash,
+    resultsFile: path.relative(REPO_ROOT, RESULTS_FILE),
+    cacheFile: path.relative(REPO_ROOT, CACHE_FILE),
+    evaluations,
+    instructions,
+  });
 
   console.log();
   console.log(`Composite score: ${composite.toFixed(4)} / 10`);

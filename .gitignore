@@ -23,6 +23,10 @@ DerivedData/
 .vercel
 .env*.local
 
+# Local autoresearch artifacts
+scripts/autoresearch/cache.json
+scripts/autoresearch/run-log.jsonl
+
 # iOS local signing config
 apps/ios/local.xcconfig
 
