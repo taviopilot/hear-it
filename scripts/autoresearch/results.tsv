@@ -1,1 +1,6 @@
-experiment_id	timestamp	composite_score	instructions_preview
+experiment_id	timestamp	judge_mode	composite_score	prompt_hash	technical_score	news_score	narrative_score	instructions_preview
+1774385557009	2026-03-24T20:52:37.009Z	heuristic-local	6.1542	12ac1e48f393	6.1125	6.2375	6.1125	Read this article aloud in a natural, engaging tone with clear pacing and clean sentence boundar
+1774385557427	2026-03-24T20:52:37.427Z	heuristic-local	6.7042	be73ad45848f	6.7375	6.7500	6.6250	Read this article aloud like a calm podcast host: natural, warm, and easy to follow, with steady
+1774385557838	2026-03-24T20:52:37.838Z	heuristic-local	7.7333	c55ce3e108af	7.7875	7.7375	7.6750	Read this article aloud like a sharp, warm podcast narrator: conversational, steady, and easy to
+1774385558245	2026-03-24T20:52:38.245Z	heuristic-local	6.7542	b03f300ab566	6.7125	6.8375	6.7125	Narrate this article with a steady, conversational newsroom style: clear sentence boundaries, sh
+1774385558655	2026-03-24T20:52:38.655Z	heuristic-local	6.1500	78cf7e5d36ff	6.1500	6.1500	6.1500	Read this article like a thoughtful audiobook essayist: warm, natural, and unhurried, with crisp

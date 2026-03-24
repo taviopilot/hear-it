@@ -1,3 +1,9 @@
+import { access, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { execFile as execFileCallback, spawnSync } from "node:child_process";
+import { promisify } from "node:util";
+
 import { countWords } from "./extractor.js";
 import type {
   AudioRenderResult,
@@ -6,11 +12,18 @@ import type {
 } from "./types.js";
 import type { AudioStore } from "./storage.js";
 
+const execFile = promisify(execFileCallback);
 const OPENAI_API_URL = "https://api.openai.com/v1/audio/speech";
 const DEFAULT_OPENAI_MODEL = "gpt-4o-mini-tts";
 const DEFAULT_OPENAI_TTS_TIMEOUT_MS = 30_000;
-const DEFAULT_TTS_INSTRUCTIONS =
-  "Read this article aloud in a natural, engaging tone with clear pacing and clean sentence boundaries.";
+export const DEFAULT_TTS_INSTRUCTIONS =
+  "Read this article aloud like a sharp, warm podcast narrator: conversational, steady, and easy to follow, with brief pauses at headings and sentence boundaries, subtle emphasis on key ideas, and no rushed or theatrical delivery.";
+const FLITE_VOICE_BY_APP_VOICE: Record<string, string> = {
+  alloy: "slt",
+  ash: "kal",
+  sage: "rms",
+  verse: "awb",
+};
 
 export const AVAILABLE_VOICES = ["alloy", "ash", "sage", "verse"] as const;
 export const VOICE_PREVIEW_TEXT =
@@ -51,6 +64,11 @@ export interface SpeechProvider {
   ): Promise<AudioRenderResult>;
 }
 
+export interface SpeechProviderFactoryOptions {
+  ttsProvider?: string | undefined;
+  ffmpegSupportsFlite?: boolean | undefined;
+}
+
 export const DEFAULT_SPEECH_OPTIONS: SpeechOptions = {
   voice: "alloy",
 };
@@ -86,6 +104,72 @@ export class FakeSpeechProvider implements SpeechProvider {
     context: SpeechSynthesisContext,
   ): Promise<AudioRenderResult> {
     return this.synthesizeText(article.textContent, speechOptions, context);
+  }
+}
+
+export class FliteSpeechProvider implements SpeechProvider {
+  readonly name = "flite";
+
+  constructor(
+    private readonly ffmpegPath = process.env.FFMPEG_PATH || "ffmpeg",
+  ) {}
+
+  async synthesize(
+    article: ExtractedArticle,
+    speechOptions: SpeechOptions,
+    context: SpeechSynthesisContext,
+  ): Promise<AudioRenderResult> {
+    return this.synthesizeText(article.textContent, speechOptions, context);
+  }
+
+  async synthesizeText(
+    text: string,
+    speechOptions: SpeechOptions,
+    context: SpeechSynthesisContext,
+  ): Promise<AudioRenderResult> {
+    const tempDir = await mkdtemp(join(tmpdir(), "hear-it-flite-"));
+    const textPath = join(tempDir, "input.txt");
+
+    try {
+      await writeFile(textPath, text, "utf8");
+      const voice = FLITE_VOICE_BY_APP_VOICE[speechOptions.voice] ?? FLITE_VOICE_BY_APP_VOICE.alloy;
+      const { stdout } = await execFile(this.ffmpegPath, [
+        "-v",
+        "error",
+        "-f",
+        "lavfi",
+        "-i",
+        `flite=textfile=${textPath}:voice=${voice}`,
+        "-f",
+        "mp3",
+        "pipe:1",
+      ], {
+        encoding: "buffer",
+        maxBuffer: 16 * 1024 * 1024,
+      });
+
+      const buffer = stdout instanceof Buffer ? stdout : Buffer.from(stdout);
+      const audioUrl =
+        context.audioStore && context.fileKey
+          ? await context.audioStore.put(context.fileKey, buffer, "audio/mpeg")
+          : null;
+      const durationSeconds = estimateDurationSeconds(text);
+
+      return {
+        audioUrl,
+        playlistUrl: null,
+        audioSegments: audioUrl ? [{ url: audioUrl, durationSeconds }] : [],
+        durationSeconds,
+        audioData: buffer,
+        contentType: "audio/mpeg",
+      };
+    } catch (error) {
+      throw new Error(
+        `Local flite speech generation failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   }
 }
 
@@ -177,11 +261,44 @@ export class OpenAISpeechProvider implements SpeechProvider {
   }
 }
 
-export function createSpeechProvider(): SpeechProvider {
+export function ffmpegSupportsFlite(ffmpegPath = process.env.FFMPEG_PATH || "ffmpeg"): boolean {
+  try {
+    const probe = spawnSync(ffmpegPath, ["-filters"], { encoding: "utf8", timeout: 5_000 });
+    return probe.status === 0 && (probe.stdout?.includes(" flite ") ?? false);
+  } catch {
+    return false;
+  }
+}
+
+export function createSpeechProvider(options: SpeechProviderFactoryOptions = {}): SpeechProvider {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
+  const providerPreference = options.ttsProvider ?? process.env.TTS_PROVIDER ?? "auto";
+  const fliteAvailable = options.ffmpegSupportsFlite ?? ffmpegSupportsFlite();
+
+  if (providerPreference === "openai") {
+    if (!apiKey) {
+      throw new Error("TTS_PROVIDER=openai requires OPENAI_API_KEY.");
+    }
+    return new OpenAISpeechProvider(apiKey);
+  }
+
+  if (providerPreference === "flite") {
+    if (!fliteAvailable) {
+      throw new Error("TTS_PROVIDER=flite requires ffmpeg with the flite filter enabled.");
+    }
+    return new FliteSpeechProvider();
+  }
+
+  if (providerPreference === "fake") {
+    return new FakeSpeechProvider();
+  }
 
   if (apiKey) {
     return new OpenAISpeechProvider(apiKey);
+  }
+
+  if (fliteAvailable) {
+    return new FliteSpeechProvider();
   }
 
   return new FakeSpeechProvider();

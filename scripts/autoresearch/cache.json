@@ -1,0 +1,137 @@
+{
+  "12ac1e48f393:technical": {
+    "average": 6.112499999999999,
+    "scores": {
+      "naturalness": 6.1000000000000005,
+      "pacing": 6.35,
+      "engagement": 5.6,
+      "clarity": 6.4
+    }
+  },
+  "12ac1e48f393:news": {
+    "average": 6.237499999999999,
+    "scores": {
+      "naturalness": 6.1000000000000005,
+      "pacing": 6.35,
+      "engagement": 5.6,
+      "clarity": 6.9
+    }
+  },
+  "12ac1e48f393:narrative": {
+    "average": 6.112499999999999,
+    "scores": {
+      "naturalness": 6.1000000000000005,
+      "pacing": 6.35,
+      "engagement": 5.6,
+      "clarity": 6.4
+    }
+  },
+  "be73ad45848f:technical": {
+    "average": 6.737500000000001,
+    "scores": {
+      "naturalness": 7.5,
+      "pacing": 6.999999999999999,
+      "engagement": 5.6,
+      "clarity": 6.8500000000000005
+    }
+  },
+  "be73ad45848f:news": {
+    "average": 6.75,
+    "scores": {
+      "naturalness": 7.5,
+      "pacing": 6.999999999999999,
+      "engagement": 5.6,
+      "clarity": 6.9
+    }
+  },
+  "be73ad45848f:narrative": {
+    "average": 6.625,
+    "scores": {
+      "naturalness": 7.5,
+      "pacing": 6.999999999999999,
+      "engagement": 5.6,
+      "clarity": 6.4
+    }
+  },
+  "c55ce3e108af:technical": {
+    "average": 7.7875,
+    "scores": {
+      "naturalness": 6.7,
+      "pacing": 9.6,
+      "engagement": 6.8,
+      "clarity": 8.049999999999999
+    }
+  },
+  "c55ce3e108af:news": {
+    "average": 7.737500000000001,
+    "scores": {
+      "naturalness": 6.7,
+      "pacing": 9.6,
+      "engagement": 6.8,
+      "clarity": 7.85
+    }
+  },
+  "c55ce3e108af:narrative": {
+    "average": 7.675000000000001,
+    "scores": {
+      "naturalness": 6.7,
+      "pacing": 9.6,
+      "engagement": 6.8,
+      "clarity": 7.6
+    }
+  },
+  "b03f300ab566:technical": {
+    "average": 6.7125,
+    "scores": {
+      "naturalness": 5.300000000000001,
+      "pacing": 8.95,
+      "engagement": 5.6,
+      "clarity": 7
+    }
+  },
+  "b03f300ab566:news": {
+    "average": 6.8375,
+    "scores": {
+      "naturalness": 5.300000000000001,
+      "pacing": 8.95,
+      "engagement": 5.6,
+      "clarity": 7.5
+    }
+  },
+  "b03f300ab566:narrative": {
+    "average": 6.7125,
+    "scores": {
+      "naturalness": 5.300000000000001,
+      "pacing": 8.95,
+      "engagement": 5.6,
+      "clarity": 7
+    }
+  },
+  "78cf7e5d36ff:technical": {
+    "average": 6.1499999999999995,
+    "scores": {
+      "naturalness": 6.800000000000001,
+      "pacing": 6.999999999999999,
+      "engagement": 5.6,
+      "clarity": 5.2
+    }
+  },
+  "78cf7e5d36ff:news": {
+    "average": 6.1499999999999995,
+    "scores": {
+      "naturalness": 6.800000000000001,
+      "pacing": 6.999999999999999,
+      "engagement": 5.6,
+      "clarity": 5.2
+    }
+  },
+  "78cf7e5d36ff:narrative": {
+    "average": 6.1499999999999995,
+    "scores": {
+      "naturalness": 6.800000000000001,
+      "pacing": 6.999999999999999,
+      "engagement": 5.6,
+      "clarity": 5.2
+    }
+  }
+}
