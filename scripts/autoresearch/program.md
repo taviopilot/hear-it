@@ -12,6 +12,19 @@ Improve the default narration instructions in `apps/api/src/tts.ts` while keepin
 4. **Commit only real winners.** After a sweep, update `DEFAULT_TTS_INSTRUCTIONS` once with the best candidate and keep the results log.
 5. **Keep runs reproducible.** Results are appended to `results.tsv`, keyed by prompt hash and judge mode, and per-snippet scores are cached in `cache.json`.
 
+## Human operator instructions
+
+If you want to replicate this with a strong coding agent, tell it something like:
+
+"Read `scripts/autoresearch/program.md`. Do setup first. Confirm you are in the Hear It repo, inspect the current branch, make sure dependencies are installed, and then run the cheap-first TTS autoresearch workflow. Use heuristic judging by default, only use paid judging for finalists, avoid editing `apps/api/src/tts.ts` for one-off candidates, keep the run reproducible, and summarize the winning prompt plus exact commands you ran."
+
+"Setup first" should mean:
+- confirm the repo/worktree and branch
+- inspect `git status`
+- ensure the workspace dependencies are installed
+- read this file before running anything
+- run the baseline once before changing strategy
+
 ## Commands
 
 Baseline / current prompt:
@@ -42,6 +55,13 @@ AUTORESEARCH_JUDGE=anthropic \
 ANTHROPIC_API_KEY=*** \
 npx tsx ../../scripts/autoresearch/experiment.ts
 ```
+
+## Cadence / timing
+
+These cheap-first experiments do not run on a fixed 5-minute interval. Each command runs immediately when invoked.
+- `experiment.ts` runs one evaluation and exits
+- `sweep.ts` runs a finite batch of candidate evaluations and exits
+- if you want recurring runs, use an external scheduler; the scripts themselves are on-demand
 
 ## What the heuristic judge rewards
 
