@@ -1,14 +1,24 @@
 import { execFileSync } from "node:child_process";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
+
+import {
+  loadRunConfig,
+  runAutoresearch,
+  type AutoresearchAdapter,
+  type CandidateScore,
+  type ImprovementContext,
+} from "./core.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, "../..");
 const TTS_FILE = path.join(REPO_ROOT, "apps/api/src/tts.ts");
-const RUN_LOG_FILE = path.join(__dirname, "run-log.jsonl");
+const RUN_LOG_FILE = process.env.AUTORESEARCH_RUN_LOG_FILE
+  ? path.resolve(REPO_ROOT, process.env.AUTORESEARCH_RUN_LOG_FILE)
+  : path.join(__dirname, "run-log.jsonl");
 
 const LEAD_PHRASE = "Read this article aloud like a warm, conversational human podcast host";
 const MODIFIER_PHRASES = [
@@ -33,19 +43,7 @@ const EMPHASIS_PHRASES = [
 ];
 const CONNECTORS = ["", "while staying concise", "without sounding stiff", "without overdoing the performance"];
 
-type CandidateScore = {
-  candidate: string;
-  score: number;
-  promptHash: string;
-};
-
-type RunConfig = {
-  durationMinutes: number;
-  maxIterations: number;
-  minImprovement: number;
-  pushOnCommit: boolean;
-  maxEstimatedCostUsd: number;
-};
+type PromptScore = CandidateScore<string>;
 
 function readCurrentInstructions(): string {
   const source = fs.readFileSync(TTS_FILE, "utf8");
@@ -57,14 +55,14 @@ function readCurrentInstructions(): string {
     throw new Error(`Could not find DEFAULT_TTS_INSTRUCTIONS in ${TTS_FILE}`);
   }
 
-  return match[1].replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
+  return match[1]!.replace(/\\n/g, "\n").replace(/\\"/g, '"').trim();
 }
 
 function writeInstructions(candidate: string): void {
   const source = fs.readFileSync(TTS_FILE, "utf8");
   const updated = source.replace(
-    /export const DEFAULT_TTS_INSTRUCTIONS\s*=\s*(?:"([^"\\]*(?:\\.[^"\\]*)*)"|`([^`]*)`);/s,
-    `export const DEFAULT_TTS_INSTRUCTIONS = ${JSON.stringify(candidate)};`,
+    /const DEFAULT_TTS_INSTRUCTIONS\s*=\s*(?:"([^"\\]*(?:\\.[^"\\]*)*)"|`([^`]*)`);/s,
+    `const DEFAULT_TTS_INSTRUCTIONS = ${JSON.stringify(candidate)};`,
   );
 
   if (updated === source) {
@@ -86,25 +84,31 @@ function parseScore(output: string): number {
   return Number(match[1]);
 }
 
-function evaluateCandidate(candidate: string, judgeMode = "heuristic-runner"): CandidateScore {
-  const output = execFileSync("yarn", ["workspace", "@hear-it/api", "exec", "tsx", "../../scripts/autoresearch/experiment.ts"], {
-    cwd: REPO_ROOT,
-    encoding: "utf8",
-    env: {
-      ...process.env,
-      AUTORESEARCH_INSTRUCTIONS_OVERRIDE: candidate,
-      AUTORESEARCH_JUDGE_MODE: judgeMode,
+function evaluateCandidate(candidate: string, judgeMode: string): PromptScore {
+  const output = execFileSync(
+    "yarn",
+    ["workspace", "@hear-it/api", "exec", "tsx", "../../scripts/autoresearch/experiment.ts"],
+    {
+      cwd: REPO_ROOT,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        AUTORESEARCH_INSTRUCTIONS_OVERRIDE: candidate,
+        AUTORESEARCH_JUDGE_MODE: judgeMode,
+      },
     },
-  });
+  );
 
   return {
     candidate,
     score: parseScore(output),
     promptHash: promptHash(candidate),
+    description: candidate,
+    estimatedCostUsd: 0,
   };
 }
 
-function commitImprovement(score: number, previousScore: number): void {
+function commitImprovement(nextBest: PromptScore, context: ImprovementContext<string>, pushOnCommit: boolean): void {
   execFileSync("git", ["add", "apps/api/src/tts.ts", "scripts/autoresearch/results.tsv"], {
     cwd: REPO_ROOT,
     stdio: "inherit",
@@ -115,30 +119,22 @@ function commitImprovement(score: number, previousScore: number): void {
     [
       "commit",
       "-m",
-      `chore: autoresearch improve TTS prompt to ${score.toFixed(4)}`,
+      `chore: autoresearch improve TTS prompt to ${nextBest.score.toFixed(4)}`,
       "-m",
-      `Previous score: ${previousScore.toFixed(4)}\nNew score: ${score.toFixed(4)}`,
+      `Previous score: ${context.previousBest.score.toFixed(4)}\nNew score: ${nextBest.score.toFixed(4)}\nWindow: ${context.windowIndex}`,
     ],
     {
       cwd: REPO_ROOT,
       stdio: "inherit",
     },
   );
-}
 
-function maybePush(pushOnCommit: boolean): void {
-  if (!pushOnCommit) {
-    return;
+  if (pushOnCommit) {
+    execFileSync("git", ["push", "origin", "HEAD"], {
+      cwd: REPO_ROOT,
+      stdio: "inherit",
+    });
   }
-
-  execFileSync("git", ["push", "origin", "HEAD"], {
-    cwd: REPO_ROOT,
-    stdio: "inherit",
-  });
-}
-
-function appendRunLog(event: object): void {
-  fs.appendFileSync(RUN_LOG_FILE, `${JSON.stringify(event)}\n`);
 }
 
 function dedupe(candidates: string[]): string[] {
@@ -196,87 +192,38 @@ function buildCandidates(current: string): string[] {
   return dedupe(candidates);
 }
 
-function loadConfig(): RunConfig {
-  return {
-    durationMinutes: Number(process.env.AUTORESEARCH_DURATION_MINUTES ?? "180"),
-    maxIterations: Number(process.env.AUTORESEARCH_MAX_ITERATIONS ?? "500"),
-    minImprovement: Number(process.env.AUTORESEARCH_MIN_IMPROVEMENT ?? "0.0001"),
-    pushOnCommit: process.env.AUTORESEARCH_PUSH === "1",
-    maxEstimatedCostUsd: Number(process.env.AUTORESEARCH_MAX_ESTIMATED_COST_USD ?? "0.5"),
+async function main(): Promise<void> {
+  const config = loadRunConfig(RUN_LOG_FILE);
+  const adapter: AutoresearchAdapter<string> = {
+    name: "hear-it-tts",
+    evaluateBaseline() {
+      const baselineInstructions = readCurrentInstructions();
+      return evaluateCandidate(baselineInstructions, "heuristic-baseline");
+    },
+    buildCandidateQueue(currentBest) {
+      return buildCandidates(currentBest.candidate);
+    },
+    evaluateCandidate(candidate, context) {
+      const judgeMode = context.mode === "fast" ? "heuristic-fast" : `heuristic-window-${context.windowIndex}`;
+      return evaluateCandidate(candidate, judgeMode);
+    },
+    applyImprovement(nextBest, context) {
+      writeInstructions(nextBest.candidate);
+      commitImprovement(nextBest, context, config.pushOnCommit);
+    },
   };
-}
 
-function main(): void {
-  const config = loadConfig();
-  const startedAt = Date.now();
-  const deadline = startedAt + config.durationMinutes * 60_000;
-  const baselineInstructions = readCurrentInstructions();
-  let best = evaluateCandidate(baselineInstructions, "heuristic-baseline");
-  let estimatedCostUsd = 0;
-
-  console.log(`Baseline score: ${best.score.toFixed(4)} (${best.promptHash})`);
-  appendRunLog({
-    type: "baseline",
-    timestamp: new Date().toISOString(),
-    score: best.score,
-    promptHash: best.promptHash,
-  });
-
-  const queue = buildCandidates(baselineInstructions).map((candidate) => ({
-    candidate,
-    promptHash: promptHash(candidate),
-  }));
-  const seen = new Set<string>();
-  let evaluated = 0;
-  let improvements = 0;
-
-  while (Date.now() < deadline && evaluated < config.maxIterations && queue.length > 0) {
-    const next = queue.shift();
-    if (!next || seen.has(next.promptHash)) {
-      continue;
-    }
-    seen.add(next.promptHash);
-
-    const scored = evaluateCandidate(next.candidate);
-    evaluated += 1;
-    appendRunLog({
-      type: "evaluation",
-      timestamp: new Date().toISOString(),
-      score: scored.score,
-      promptHash: scored.promptHash,
-      candidate: scored.candidate,
-    });
-    console.log(`[${evaluated}] ${scored.score.toFixed(4)} ${scored.promptHash} ${scored.candidate}`);
-
-    if (estimatedCostUsd > config.maxEstimatedCostUsd) {
-      console.log(`Stopping: estimated cost ${estimatedCostUsd.toFixed(4)} exceeded budget.`);
-      break;
-    }
-
-    if (scored.score > best.score + config.minImprovement) {
-      const previousBest = best;
-      best = scored;
-      improvements += 1;
-      writeInstructions(best.candidate);
-      commitImprovement(best.score, previousBest.score);
-      maybePush(config.pushOnCommit);
-      appendRunLog({
-        type: "improvement",
-        timestamp: new Date().toISOString(),
-        score: best.score,
-        previousScore: previousBest.score,
-        promptHash: best.promptHash,
-        candidate: best.candidate,
-      });
-    }
-  }
+  const summary = await runAutoresearch(adapter, config);
 
   console.log();
-  console.log(`Finished ${evaluated} evaluations with ${improvements} improvements.`);
-  console.log(`Best score: ${best.score.toFixed(4)}`);
-  console.log(`Best prompt: ${best.candidate}`);
-  console.log(`Elapsed minutes: ${((Date.now() - startedAt) / 60_000).toFixed(2)}`);
-  console.log(`Estimated cost: $${estimatedCostUsd.toFixed(4)}`);
+  console.log(`Finished ${summary.evaluated} evaluations with ${summary.improvements} improvements across ${summary.windowCount} experiment window(s).`);
+  console.log(`Best score: ${summary.best.score.toFixed(4)}`);
+  console.log(`Best prompt: ${summary.best.candidate}`);
+  console.log(`Elapsed minutes: ${summary.elapsedMinutes.toFixed(2)}`);
+  console.log(`Estimated cost: $${summary.estimatedCostUsd.toFixed(4)}`);
 }
 
-main();
+main().catch((error) => {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+});

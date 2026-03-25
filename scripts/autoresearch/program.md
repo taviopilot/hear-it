@@ -33,17 +33,28 @@ If you want to replicate this with a strong coding agent, tell it something like
    `yarn workspace @hear-it/api exec tsx ../../scripts/autoresearch/experiment.ts`
 2. Sweep easy candidate variations without editing the production file.
    `yarn workspace @hear-it/api exec tsx ../../scripts/autoresearch/sweep.ts`
-3. Run the bounded loop.
+3. Run the bounded autoresearch loop.
    `AUTORESEARCH_DURATION_MINUTES=180 AUTORESEARCH_MAX_ESTIMATED_COST_USD=0.50 yarn workspace @hear-it/api exec tsx ../../scripts/autoresearch/run.ts`
 4. Let the loop commit only genuine score improvements.
 5. Push the branch when you are happy with the result, or set `AUTORESEARCH_PUSH=1` to push on each improved commit.
 
 ## Cadence / timing
-These experiments do not run on a fixed 5-minute interval.
+The default mode now follows the Karpathy-style idea more closely: one experiment window lasts 5 minutes unless you override it.
 - `experiment.ts` runs one evaluation and exits
 - `sweep.ts` runs a finite batch and exits
-- `run.ts` loops continuously until it hits its time, iteration, or budget limits
-- if you want a 5-minute schedule, that must be provided by an external scheduler; the current scripts do not sleep for 5 minutes between evaluations
+- `run.ts` defaults to `AUTORESEARCH_MODE=windowed`
+- in windowed mode, one experiment lasts `AUTORESEARCH_EXPERIMENT_DURATION_MINUTES` minutes and defaults to `5`
+- at the end of each window, the best candidate from that window is compared to the global best and only then considered for a commit
+- optional `AUTORESEARCH_INTERVAL_SECONDS` can sleep between experiment windows
+- `AUTORESEARCH_MODE=fast` is still available for brute-force local exploration where each evaluated candidate effectively becomes its own tiny experiment
+
+Examples:
+- default 5-minute experiment windows:
+  `yarn workspace @hear-it/api exec tsx ../../scripts/autoresearch/run.ts`
+- 3-minute windows with a 30-second pause between windows:
+  `AUTORESEARCH_EXPERIMENT_DURATION_MINUTES=3 AUTORESEARCH_INTERVAL_SECONDS=30 yarn workspace @hear-it/api exec tsx ../../scripts/autoresearch/run.ts`
+- fast mode for dense local heuristic search:
+  `AUTORESEARCH_MODE=fast yarn workspace @hear-it/api exec tsx ../../scripts/autoresearch/run.ts`
 
 ## Experiment design
 The heuristic judge scores three benchmark article types:
@@ -67,12 +78,27 @@ The score is only a cheap proxy. Use it to search broadly. If later needed, vali
 - `AUTORESEARCH_INSTRUCTIONS_OVERRIDE` lets you test candidates without mutating `tts.ts`.
 
 ## Files
+- `core.ts` — reusable runner contract for bounded autoresearch loops (windowed mode, fast mode, cadence, logging)
 - `experiment.ts` — local heuristic judge with caching and TSV logging
 - `sweep.ts` — cheap candidate sweep using override mode
-- `run.ts` — bounded autoresearch loop with git commits on improvements
+- `run.ts` — Hear It-specific adapter on top of the shared autoresearch runner contract
 - `results.tsv` — cumulative experiment log
 - `run-log.jsonl` — untracked run log for a specific long run
 - `cache.json` — untracked prompt/snippet score cache
+
+## Reuse pattern for future repos
+This repo is intentionally starting with a light abstraction instead of a separate npm package.
+- keep `program.md` repo-specific and human-editable
+- keep the reusable loop mechanics in `core.ts`
+- keep repo-specific experiment logic in `run.ts` or another small adapter file
+- if several repos converge on the same contract, then consider extracting a package or a Hermes skill later
+
+For now, the reusable contract is roughly:
+- evaluate the current baseline
+- build a candidate queue
+- evaluate candidates inside a bounded experiment window
+- keep only the best candidate from that window
+- commit only if that window beats the global best
 
 ## Practical guidance
 - Favor concise prompts with specific delivery cues.
