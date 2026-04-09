@@ -1,3 +1,8 @@
+import { execFile, execFileSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
 import { countWords } from "./extractor.js";
 import type {
   AudioRenderResult,
@@ -9,8 +14,11 @@ import type { AudioStore } from "./storage.js";
 const OPENAI_API_URL = "https://api.openai.com/v1/audio/speech";
 const DEFAULT_OPENAI_MODEL = "gpt-4o-mini-tts";
 const DEFAULT_OPENAI_TTS_TIMEOUT_MS = 30_000;
+const DEFAULT_TTS_PROVIDER = "auto";
 const DEFAULT_TTS_INSTRUCTIONS =
-  "Read this article aloud in a natural, engaging tone with clear pacing and clean sentence boundaries.";
+  "Read the article like a smart, calm narrator speaking to one listener. Keep a warm, conversational tone with steady pacing, brief pauses at headings and sentence boundaries, and subtle emphasis on key ideas, names, and transitions. Never rush dense passages, lists, quotes, or numbers, and avoid sounding robotic, flat, or theatrical.";
+
+let ffmpegFliteSupport: boolean | null = null;
 
 export const AVAILABLE_VOICES = ["alloy", "ash", "sage", "verse"] as const;
 export const VOICE_PREVIEW_TEXT =
@@ -78,6 +86,53 @@ export class FakeSpeechProvider implements SpeechProvider {
       audioData,
       contentType: "audio/mpeg",
     };
+  }
+
+  async synthesize(
+    article: ExtractedArticle,
+    speechOptions: SpeechOptions,
+    context: SpeechSynthesisContext,
+  ): Promise<AudioRenderResult> {
+    return this.synthesizeText(article.textContent, speechOptions, context);
+  }
+}
+
+export class LocalFliteSpeechProvider implements SpeechProvider {
+  readonly name = "local-flite";
+
+  constructor(private readonly ffmpegBinary = process.env.FFMPEG_BINARY || "ffmpeg") {}
+
+  async synthesizeText(
+    text: string,
+    speechOptions: SpeechOptions,
+    context: SpeechSynthesisContext,
+  ): Promise<AudioRenderResult> {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "hear-it-flite-"));
+    const textFile = path.join(tempDir, "input.txt");
+
+    try {
+      fs.writeFileSync(textFile, text, "utf8");
+      const audioData = await renderLocalMp3(this.ffmpegBinary, textFile, speechOptions.voice);
+      const durationSeconds = estimateDurationSeconds(text);
+      const audioUrl =
+        context.audioStore && context.fileKey
+          ? await context.audioStore.put(context.fileKey, audioData, "audio/mpeg")
+          : null;
+
+      return {
+        audioUrl,
+        playlistUrl: null,
+        audioSegments: audioUrl ? [{ url: audioUrl, durationSeconds }] : [],
+        durationSeconds,
+        audioData,
+        contentType: "audio/mpeg",
+      };
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new Error(`Local flite speech generation failed: ${detail}`);
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   }
 
   async synthesize(
@@ -178,10 +233,31 @@ export class OpenAISpeechProvider implements SpeechProvider {
 }
 
 export function createSpeechProvider(): SpeechProvider {
+  const providerPreference = (process.env.TTS_PROVIDER || DEFAULT_TTS_PROVIDER).trim().toLowerCase();
   const apiKey = process.env.OPENAI_API_KEY?.trim();
+  const localAvailable = hasFfmpegFliteSupport();
+
+  if (providerPreference === "openai") {
+    if (apiKey) {
+      return new OpenAISpeechProvider(apiKey);
+    }
+    return localAvailable ? new LocalFliteSpeechProvider() : new FakeSpeechProvider();
+  }
+
+  if (providerPreference === "local") {
+    return localAvailable ? new LocalFliteSpeechProvider() : new FakeSpeechProvider();
+  }
+
+  if (providerPreference === "fake") {
+    return new FakeSpeechProvider();
+  }
 
   if (apiKey) {
     return new OpenAISpeechProvider(apiKey);
+  }
+
+  if (localAvailable) {
+    return new LocalFliteSpeechProvider();
   }
 
   return new FakeSpeechProvider();
@@ -197,6 +273,78 @@ function slugify(value: string): string {
 
 function estimateDurationSeconds(text: string): number {
   return Math.max(1, Math.ceil(countWords(text) / 2.7));
+}
+
+function mapVoiceToFlite(voice: string): string {
+  switch (voice) {
+    case "alloy":
+      return "slt";
+    case "ash":
+      return "awb";
+    case "sage":
+      return "kal16";
+    case "verse":
+      return "rms";
+    default:
+      return "slt";
+  }
+}
+
+function escapeFilterValue(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/:/g, "\\:").replace(/'/g, "\\'");
+}
+
+function hasFfmpegFliteSupport(): boolean {
+  if (ffmpegFliteSupport !== null) {
+    return ffmpegFliteSupport;
+  }
+
+  try {
+    const output = execFileSync(process.env.FFMPEG_BINARY || "ffmpeg", ["-hide_banner", "-filters"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    ffmpegFliteSupport = output.includes(" flite ") || output.includes("flite             |->A");
+  } catch {
+    ffmpegFliteSupport = false;
+  }
+
+  return ffmpegFliteSupport;
+}
+
+function renderLocalMp3(ffmpegBinary: string, textFile: string, voice: string): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    execFile(
+      ffmpegBinary,
+      [
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-f",
+        "lavfi",
+        "-i",
+        `flite=textfile=${escapeFilterValue(textFile)}:voice=${mapVoiceToFlite(voice)}`,
+        "-c:a",
+        "libmp3lame",
+        "-b:a",
+        "96k",
+        "-f",
+        "mp3",
+        "pipe:1",
+      ],
+      {
+        encoding: "buffer",
+        maxBuffer: 64 * 1024 * 1024,
+      },
+      (error, stdout) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(Buffer.from(stdout));
+      },
+    );
+  });
 }
 
 export function buildAudioFileKey(
